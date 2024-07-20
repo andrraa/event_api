@@ -17,13 +17,6 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, $roles): Response
     {
-        if (!Auth::check()) {
-            return response()->json([
-                'code' => 401,
-                'message' => 'Unauthorized'
-            ])->setStatusCode(401);
-        }
-
         $userData = new UserProfileResource(Auth::user());
 
         $userRoleId = $userData->role->id;
