@@ -6,17 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ReportRequest;
 use App\Models\Transaction;
 use Exception;
-use Illuminate\Http\JsonResponse;
-use JetBrains\PhpStorm\NoReturn;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-    #[NoReturn] public function export(ReportRequest $request): JsonResponse
+    public function export(ReportRequest $request): StreamedResponse
     {
         try {
             $validatedData = $request->validated();
@@ -134,7 +133,7 @@ class ReportController extends Controller
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
 
-            // Output
+            /*// Output
             $writer = new Xlsx($spreadsheet);
 
             $fileName = 'TransactionReport-' . $validatedData['start_date'] . '-' . $validatedData['end_date'] . '.xlsx';
@@ -144,7 +143,30 @@ class ReportController extends Controller
             header('Cache-Control: max-age=0');
 
             $writer->save('php://output');
-            exit();
+            exit();*/
+
+            // Create a writer instance
+            $writer = new Xlsx($spreadsheet);
+
+            // Generate file name
+            $fileName = 'TransactionReport-' . $validatedData['start_date'] . '-' . $validatedData['end_date'] . '.xlsx';
+
+            // Create a response to stream the file content
+            $response = new StreamedResponse(function () use ($writer) {
+                $writer->save('php://output');
+            });
+
+            // Set the response headers
+            $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            $response->headers->set('Content-Disposition', 'attachment;filename="' . $fileName . '"');
+            $response->headers->set('Cache-Control', 'max-age=0');
+            $response->headers->set('Cache-Control', 'max-age=1');
+            $response->headers->set('Expires', 'Mon, 26 Jul 1997 05:00:00 GMT');
+            $response->headers->set('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT');
+            $response->headers->set('Cache-Control', 'cache, must-revalidate');
+            $response->headers->set('Pragma', 'public');
+
+            return $response;
         } catch (Exception $e) {
             return response()->json([
                 'code' => 500,

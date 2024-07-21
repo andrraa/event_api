@@ -16,6 +16,7 @@ Route::prefix('v1')->namespace('App\\Http\\Controllers\\v1')->group(function () 
     Route::middleware([VerifyUser::class])->group(function () {
         // Users
         Route::get('/users/profile', [UserController::class, 'profile']);
+        Route::delete('/users/logout', [UserController::class, 'logout']);
 
         // Events
         Route::middleware(['role:1;2'])->group(function () {
@@ -24,7 +25,7 @@ Route::prefix('v1')->namespace('App\\Http\\Controllers\\v1')->group(function () 
                 ->where('id', '[0-9]+');
             Route::post('/events/update/{id}', [EventController::class, 'update'])
                 ->where('id', '[0-9]+');
-            Route::delete('events/delete/{id}', [EventController::class, 'delete'])
+            Route::delete('/events/delete/{id}', [EventController::class, 'delete'])
                 ->where('id', '[0-9]+');
             Route::get('/events', [EventController::class, 'index']);
             Route::get('/events/list', [EventController::class, 'getEventList']);

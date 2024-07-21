@@ -55,7 +55,11 @@ class UserController extends Controller
             ]);
 
             if ($setToken) {
-                return (new UserLoginResource($setToken))->response()->setStatusCode(200);
+                return response()->json([
+                    'code' => 200,
+                    'message' => 'LOGIN_SUCCESSFUL',
+                    'data' => new UserLoginResource($setToken)
+                ]);
             }
 
             return response()->json([
@@ -75,7 +79,40 @@ class UserController extends Controller
         try {
             $userData = Auth::user();
 
-            return (new UserProfileResource($userData))->response();
+            $user = new UserProfileResource($userData);
+
+            return response()->json([
+                'code' => 200,
+                'mesage' => 'SUCCESS_GET_PROFILE',
+                'data' => $user
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function logout()
+    {
+        try {
+            $userData = Auth::user();
+
+            $result = UserToken::query()
+                ->where('user_id', $userData['id'])
+                ->orderBy('expired_at', 'DESC')
+                ->first()
+                ->delete();
+
+            if ($result) {
+                return response()->json()->setStatusCode(204);
+            }
+
+            return response()->json([
+                'code' => 500,
+                'message' => 'LOGOUT_FAILED',
+            ], 400);
         } catch (Exception $e) {
             return response()->json([
                 'code' => 500,
